@@ -1,4 +1,4 @@
-export default function ExpenseList({ items = [] }) {
+export default function ExpenseList({ items = [], currencyFormatter = (v) => `$${Number(v).toFixed(2)}` }) {
   if (!items.length) {
     return (
       <div className="text-slate-300 text-sm bg-slate-800/40 border border-slate-700 rounded-xl p-4">
@@ -16,7 +16,7 @@ export default function ExpenseList({ items = [] }) {
             {e.note && <div className="text-slate-300 text-sm">{e.note}</div>}
           </div>
           <div className="text-right">
-            <div className="text-white font-semibold">${Number(e.amount).toFixed(2)}</div>
+            <div className="text-white font-semibold">{currencyFormatter(e.amount)}</div>
             <div className="text-slate-400 text-xs">{e.date}</div>
           </div>
         </div>
