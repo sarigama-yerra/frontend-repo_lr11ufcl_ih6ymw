@@ -1,70 +1,93 @@
+import { useEffect, useMemo, useState } from 'react'
+import ExpenseForm from './components/ExpenseForm'
+import ExpenseList from './components/ExpenseList'
+import MonthPicker from './components/MonthPicker'
+
 function App() {
+  const now = new Date()
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const [month, setMonth] = useState(currentMonth)
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [summary, setSummary] = useState({ total: 0, count: 0, breakdown: {}, trends: {} })
+
+  const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
+
+  const refresh = async () => {
+    setLoading(true)
+    try {
+      const [listRes, sumRes] = await Promise.all([
+        fetch(`${baseUrl}/api/expenses?month=${month}`),
+        fetch(`${baseUrl}/api/summary?month=${month}`),
+      ])
+      const [listData, sumData] = await Promise.all([listRes.json(), sumRes.json()])
+      setItems(listData)
+      setSummary(sumData)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    refresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [month])
+
+  const breakdownList = useMemo(() => {
+    const entries = Object.entries(summary.breakdown || {})
+    entries.sort((a,b) => b[1]-a[1])
+    return entries
+  }, [summary])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Subtle pattern overlay */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]"></div>
 
-      <div className="relative min-h-screen flex items-center justify-center p-8">
-        <div className="max-w-2xl w-full">
-          {/* Header with Flames icon */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center mb-6">
-              <img
-                src="/flame-icon.svg"
-                alt="Flames"
-                className="w-24 h-24 drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]"
-              />
-            </div>
-
-            <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
-              Flames Blue
-            </h1>
-
-            <p className="text-xl text-blue-200 mb-6">
-              Build applications through conversation
-            </p>
+      <div className="relative min-h-screen p-6">
+        <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Monthly Expense Tracker</h1>
+            <p className="text-blue-200/80">Track your spending and review previous months.</p>
           </div>
+          <MonthPicker value={month} onChange={setMonth} />
+        </header>
 
-          {/* Instructions */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-8 shadow-xl mb-6">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                1
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Describe your idea</h3>
-                <p className="text-blue-200/80 text-sm">Use the chat panel on the left to tell the AI what you want to build</p>
-              </div>
+        <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <section className="lg:col-span-2 space-y-4">
+            <ExpenseForm onAdded={refresh} />
+            {loading ? (
+              <div className="text-slate-300">Loading...</div>
+            ) : (
+              <ExpenseList items={items} />
+            )}
+          </section>
+
+          <aside className="space-y-4">
+            <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4">
+              <div className="text-slate-300 text-sm mb-1">Total this month</div>
+              <div className="text-3xl font-bold text-white">${Number(summary.total || 0).toFixed(2)}</div>
+              <div className="text-slate-400 text-xs">{summary.count || 0} expenses</div>
             </div>
 
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                2
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Watch it build</h3>
-                <p className="text-blue-200/80 text-sm">Your app will appear in this preview as the AI generates the code</p>
-              </div>
+            <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4">
+              <div className="text-slate-300 text-sm mb-3">By category</div>
+              {breakdownList.length ? (
+                <div className="space-y-2">
+                  {breakdownList.map(([cat, amt]) => (
+                    <div key={cat} className="flex items-center justify-between text-sm">
+                      <div className="text-white">{cat}</div>
+                      <div className="text-blue-200">${Number(amt).toFixed(2)}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-slate-400 text-sm">No data yet</div>
+              )}
             </div>
-
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                3
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Refine and iterate</h3>
-                <p className="text-blue-200/80 text-sm">Continue the conversation to add features and make changes</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-blue-300/60">
-              No coding required • Just describe what you want
-            </p>
-          </div>
-        </div>
+          </aside>
+        </main>
       </div>
     </div>
   )
