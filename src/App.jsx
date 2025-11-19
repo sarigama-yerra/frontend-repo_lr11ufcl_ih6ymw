@@ -85,9 +85,11 @@ function App() {
               {breakdownList.length ? (
                 <div className="space-y-2">
                   {breakdownList.map(([cat, amt]) => (
-                    <div key={cat} className="flex items-center justify-between text-sm">
-                      <div className="text-white">{cat}</div>
-                      <div className="text-blue-200">{currencyFormatter(amt)}</div>
+                    <div key={cat} className="flex items-center justify-between text-sm gap-2">
+                      <div className="text-white truncate">{cat}</div>
+                      <div className="text-blue-200 tabular-nums whitespace-nowrap overflow-hidden text-ellipsis max-w-[60%]" title={currencyFormatter(amt)}>
+                        {currencyFormatter(amt)}
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -10,13 +10,15 @@ export default function ExpenseList({ items = [], currencyFormatter = (v) => `$$
   return (
     <div className="bg-slate-800/40 border border-slate-700 rounded-xl divide-y divide-slate-700">
       {items.map((e) => (
-        <div key={e.id} className="flex items-center justify-between p-3">
-          <div>
-            <div className="text-white font-medium">{e.category}</div>
-            {e.note && <div className="text-slate-300 text-sm">{e.note}</div>}
+        <div key={e.id} className="flex items-center justify-between p-3 gap-3">
+          <div className="min-w-0">
+            <div className="text-white font-medium truncate">{e.category}</div>
+            {e.note && <div className="text-slate-300 text-sm truncate" title={e.note}>{e.note}</div>}
           </div>
-          <div className="text-right">
-            <div className="text-white font-semibold">{currencyFormatter(e.amount)}</div>
+          <div className="text-right min-w-0">
+            <div className="text-white font-semibold tabular-nums whitespace-nowrap overflow-hidden text-ellipsis max-w-[45vw] sm:max-w-none text-base sm:text-lg" title={currencyFormatter(e.amount)}>
+              {currencyFormatter(e.amount)}
+            </div>
             <div className="text-slate-400 text-xs">{e.date}</div>
           </div>
         </div>
